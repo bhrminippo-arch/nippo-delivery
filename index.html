@@ -144,7 +144,7 @@
       <div class="g2">
         <div class="fg"><label>作業日<span class="req">*</span></label><input type="date" id="f-date" required></div>
         <div class="fg">
-          <label>天候</label>
+          <label>天候<span class="req">*</span></label>
           <select id="f-weather">
             <option value="">選択</option>
             <option>晴</option><option>曇</option><option>雨</option><option>雪</option>
@@ -345,7 +345,7 @@
             <option value="ヤマト運輸">ヤマト運輸</option>
             <option value="その他">その他</option>
           </select>
-          <input type="text" id="f-anken" placeholder="案件名を入力" style="display:none; margin-top:8px;">
+          <input type="text" id="f-anken" placeholder="案件名を入力" style="display:none; margin-top:8px;" oninput="validateAll()">
         </div>
         <div class="fg gcol-full"><label>営業所<span class="req">*</span></label><input type="text" id="f-eigyo" placeholder="例: ヤマト水戸平須、水戸山崎DS等"></div>
       </div>
@@ -537,7 +537,6 @@ function validateAll() {
     { id:'f-cb1',     label:'乗務前 確認者' },
     { id:'f-al2',     label:'乗務後 酒気の有無' },
     { id:'f-cb2',     label:'乗務後 確認者' },
-    { id:'f-anken',   label:'案件名' },
     { id:'f-eigyo',   label:'営業所' },
   ];
   REQUIRED.forEach(({ id, label }) => {
@@ -568,8 +567,8 @@ function validateAll() {
 
   // ── 稼働報告書 合計・荷物列 必須 ──
   const REQ_DL = [
-    { id:'f-smo', label:'総持出（合計）' }, { id:'f-sha', label:'総配完（合計）' }, { id:'f-sre', label:'総持戻（合計）' },
-    { id:'f-lmo', label:'総持出（荷物）' }, { id:'f-lha', label:'総配完（荷物）' }, { id:'f-lre', label:'総持戻（荷物）' },
+    { id:'f-smo', label:'総持出（合計）' }, { id:'f-sha', label:'総配完（合計）' },
+    { id:'f-lmo', label:'総持出（荷物）' }, { id:'f-lha', label:'総配完（荷物）' },
   ];
   REQ_DL.forEach(({ id, label }) => {
     if (document.getElementById(id).value === '') errors.push(`「${label}」は必須です`);
