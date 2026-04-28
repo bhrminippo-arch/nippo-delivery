@@ -125,10 +125,13 @@
     .hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
 
     /* ════ PDF TEMPLATE ════ */
-    /* display:none だとフォントが読込まれず白紙になるため画面外に配置 */
     #pdf-tmpl {
-      position: fixed; left: -9999px; top: 0; visibility: hidden; pointer-events: none;
-      font-family: 'Noto Sans JP', sans-serif; font-size: 9pt;
+      position: fixed; left: -9999px; top: 0;
+      visibility: hidden; pointer-events: none;
+      /* Google Fontsを使わずシステムフォントを使用（白紙防止） */
+      font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+                   "Yu Gothic", "YuGothic", "Meiryo", sans-serif;
+      font-size: 9pt;
       padding: 8mm 8mm; background: #fff; color: #000; width: 194mm;
     }
     #pdf-tmpl.generating { visibility: visible; }
@@ -679,41 +682,43 @@ function makeFilename(d) {
 }
 function pdfOpt(fn) {
   return {
-    margin:[7,6,7,6],filename:fn,
-    image:{type:'jpeg',quality:0.96},
-    html2canvas:{
-      scale:2, useCORS:true, logging:false, letterRendering:true,
-      allowTaint:true, foreignObjectRendering:false,
-      onclone: (doc) => {
-        // クローン内でフォントが適用されるよう少し待つ
-        return new Promise(r => setTimeout(r, 800));
-      }
+    margin: [7, 6, 7, 6],
+    filename: fn,
+    image: { type: 'jpeg', quality: 0.95 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      letterRendering: true,
     },
-    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
   };
 }
 
+/* 指定ミリ秒待機 */
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 /* フォント読込待機 */
-function waitFonts() {
-  return document.fonts.ready;
-}
+function waitFonts() { return document.fonts.ready; }
 
 /* ════ PDFダウンロード ════ */
 async function doDownload() {
-  toast('PDF生成中…',false);
+  toast('PDF生成中…', false);
   const tmpl = document.getElementById('pdf-tmpl');
   try {
     const d = collect();
     fill(d);
     tmpl.classList.add('generating');
     await waitFonts();
+    await sleep(300); // レンダリング安定待機
     await html2pdf().set(pdfOpt(makeFilename(d))).from(tmpl).save();
     tmpl.classList.remove('generating');
-    toast('✓ PDFを保存しました',false);
+    toast('✓ PDFを保存しました', false);
   } catch(e) {
     console.error(e);
     tmpl.classList.remove('generating');
-    toast('PDF生成に失敗しました: '+e.message,true);
+    toast('PDF生成に失敗しました: ' + e.message, true);
   }
 }
 
@@ -733,6 +738,7 @@ async function doSend() {
     fill(d);
     tmpl.classList.add('generating');
     await waitFonts();
+    await sleep(300);
     const fn      = makeFilename(d);
     const pdfBlob = await html2pdf().set(pdfOpt(fn)).from(tmpl).outputPdf('blob');
     tmpl.classList.remove('generating');
