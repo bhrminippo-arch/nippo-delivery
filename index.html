@@ -125,7 +125,13 @@
     .hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
 
     /* ════ PDF TEMPLATE ════ */
-    #pdf-tmpl { display: none; font-family: 'Noto Sans JP', sans-serif; font-size: 9pt; padding: 8mm 8mm; background: #fff; color: #000; width: 194mm; }
+    /* display:none だとフォントが読込まれず白紙になるため画面外に配置 */
+    #pdf-tmpl {
+      position: fixed; left: -9999px; top: 0; visibility: hidden; pointer-events: none;
+      font-family: 'Noto Sans JP', sans-serif; font-size: 9pt;
+      padding: 8mm 8mm; background: #fff; color: #000; width: 194mm;
+    }
+    #pdf-tmpl.generating { visibility: visible; }
     #pdf-tmpl h2 { text-align: center; font-size: 13pt; font-weight: 700; margin-bottom: 6px; letter-spacing: .08em; }
     #pdf-tmpl table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-size: 8pt; }
     #pdf-tmpl td, #pdf-tmpl th { border: 1px solid #333; padding: 3px 5px; vertical-align: middle; }
@@ -247,7 +253,7 @@
             <div class="fg"><label>運転前後</label>
               <select id="f-dba1"><option value="運転前">運転前</option><option value="運転後">運転後</option></select></div>
             <div class="fg"><label>確認方法</label>
-              <select id="f-cd1"><option value="アルコール検知器">アルコール検知器</option><option value="目視">目視</option></select></div>
+              <select id="f-cd1"><option value="電話">電話</option><option value="対面">対面</option></select></div>
             <div class="fg"><label>酒気の有無（mg/ℓ）</label><input type="text" id="f-al1" placeholder="例: 0.00"></div>
             <div class="fg"><label>確認者</label><input type="text" id="f-cb1" placeholder="確認者名"></div>
             <div class="fg gcol-full"><label>指示事項</label><input type="text" id="f-sj1" placeholder="指示事項"></div>
@@ -261,7 +267,7 @@
             <div class="fg"><label>運転前後</label>
               <select id="f-dba2"><option value="運転前">運転前</option><option value="運転後" selected>運転後</option></select></div>
             <div class="fg"><label>確認方法</label>
-              <select id="f-cd2"><option value="アルコール検知器">アルコール検知器</option><option value="目視">目視</option></select></div>
+              <select id="f-cd2"><option value="電話">電話</option><option value="対面">対面</option></select></div>
             <div class="fg"><label>酒気の有無（mg/ℓ）</label><input type="text" id="f-al2" placeholder="例: 0.00"></div>
             <div class="fg"><label>確認者</label><input type="text" id="f-cb2" placeholder="確認者名"></div>
             <div class="fg gcol-full"><label>指示事項</label><input type="text" id="f-sj2" placeholder="指示事項"></div>
@@ -675,23 +681,38 @@ function pdfOpt(fn) {
   return {
     margin:[7,6,7,6],filename:fn,
     image:{type:'jpeg',quality:0.96},
-    html2canvas:{scale:2,useCORS:true,logging:false,letterRendering:true},
+    html2canvas:{
+      scale:2, useCORS:true, logging:false, letterRendering:true,
+      allowTaint:true, foreignObjectRendering:false,
+      onclone: (doc) => {
+        // クローン内でフォントが適用されるよう少し待つ
+        return new Promise(r => setTimeout(r, 800));
+      }
+    },
     jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
   };
+}
+
+/* フォント読込待機 */
+function waitFonts() {
+  return document.fonts.ready;
 }
 
 /* ════ PDFダウンロード ════ */
 async function doDownload() {
   toast('PDF生成中…',false);
-  const tmpl=document.getElementById('pdf-tmpl');
+  const tmpl = document.getElementById('pdf-tmpl');
   try {
-    const d=collect(); fill(d);
-    tmpl.style.display='block';
+    const d = collect();
+    fill(d);
+    tmpl.classList.add('generating');
+    await waitFonts();
     await html2pdf().set(pdfOpt(makeFilename(d))).from(tmpl).save();
-    tmpl.style.display='none';
+    tmpl.classList.remove('generating');
     toast('✓ PDFを保存しました',false);
   } catch(e) {
-    console.error(e); tmpl.style.display='none';
+    console.error(e);
+    tmpl.classList.remove('generating');
     toast('PDF生成に失敗しました: '+e.message,true);
   }
 }
@@ -710,10 +731,11 @@ async function doSend() {
   try {
     // PDF生成
     fill(d);
-    tmpl.style.display = 'block';
+    tmpl.classList.add('generating');
+    await waitFonts();
     const fn      = makeFilename(d);
     const pdfBlob = await html2pdf().set(pdfOpt(fn)).from(tmpl).outputPdf('blob');
-    tmpl.style.display = 'none';
+    tmpl.classList.remove('generating');
 
     // Base64変換
     setProgress('アップロード準備中…','');
@@ -751,7 +773,7 @@ async function doSend() {
     }
   } catch(e) {
     console.error(e);
-    tmpl.style.display = 'none';
+    tmpl.classList.remove('generating');
     hideProgress();
     toast('エラー: '+e.message,true);
   }
