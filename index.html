@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>軽貨物業務日報 入力システム</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary:     #1A3A5C;
+      --primary-h:   #2B5F9E;
+      --accent:      #C84B1F;
+      --bg:          #EDECE8;
+      --card:        #FFFFFF;
+      --border:      #CCC;
+      --text:        #1A1A1A;
+      --muted:       #666;
+      --success:     #2D7A47;
+      --success-bg:  #EEF6EE;
+      --success-bd:  #B8D9BC;
+      --error:       #C0392B;
+      --error-bg:    #FEF0EE;
+      --error-bd:    #E8A89A;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+    header {
+      background: var(--primary); color: #fff;
+      padding: 18px 28px; display: flex; align-items: center;
+      justify-content: space-between; border-bottom: 3px solid var(--accent);
+    }
+    header h1 { font-size: 18px; font-weight: 700; letter-spacing: .06em; }
+    header .sub { font-size: 11px; opacity: .65; margin-top: 3px; }
+
+    .container { max-width: 920px; margin: 0 auto; padding: 28px 16px 60px; }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+    .card-header { background: var(--primary); color: #fff; padding: 10px 18px; font-size: 13px; font-weight: 700; letter-spacing: .07em; }
+    .card-body { padding: 18px; }
+
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .gcol-full { grid-column: 1 / -1; }
+    @media (max-width: 640px) { .g2,.g3 { grid-template-columns: 1fr; } .gcol-full { grid-column: 1; } }
+
+    .fg { display: flex; flex-direction: column; gap: 5px; }
+    label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .03em; }
+    input[type="text"], input[type="date"], input[type="number"], input[type="email"],
+    select, textarea {
+      width: 100%; border: 1px solid #CCC; border-radius: 3px; padding: 8px 10px;
+      font-family: 'Noto Sans JP', sans-serif; font-size: 13px; color: var(--text);
+      background: #fff; transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,58,92,.12);
+    }
+    textarea { resize: vertical; min-height: 60px; }
+
+    .sub-card { border: 1px solid #DDD; border-radius: 3px; margin-bottom: 10px; overflow: hidden; }
+    .sub-header { background: #EDF0F6; color: var(--primary); padding: 6px 14px; font-size: 11px; font-weight: 700; letter-spacing: .05em; }
+    .sub-body { padding: 12px 14px; }
+
+    .ck-list { display: flex; flex-direction: column; gap: 7px; }
+    .ck-item { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+    .ck-item input[type="checkbox"] { width: 15px; height: 15px; margin-top: 2px; flex-shrink: 0; accent-color: var(--primary); }
+    .ck-item span { font-size: 12px; line-height: 1.5; }
+
+    .auto-badge {
+      border-radius: 3px; padding: 9px 12px; font-size: 13px; font-weight: 700;
+      min-height: 36px; display: flex; align-items: center; gap: 6px; line-height: 1;
+    }
+    .auto-badge.ok      { background: var(--success-bg); border: 1px solid var(--success-bd); color: var(--success); }
+    .auto-badge.err     { background: var(--error-bg);   border: 1px solid var(--error-bd);   color: var(--error); }
+    .auto-badge.neutral { background: #F4F4F4; border: 1px solid #CCC; color: var(--muted); }
+    .auto-badge .unit   { font-size: 11px; font-weight: 400; }
+
+    .dl-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .dl-table th, .dl-table td { border: 1px solid #DDD; padding: 7px 10px; font-size: 12px; text-align: center; }
+    .dl-table th { background: #EDF0F6; font-weight: 700; color: var(--primary); }
+    .dl-table td:first-child { text-align: left; font-weight: 600; white-space: nowrap; }
+    .dl-table input[type="number"] { border: none; text-align: center; padding: 4px; width: 100%; background: transparent; }
+    .dl-table input[type="number"]:focus { outline: none; border-bottom: 2px solid var(--primary); }
+
+    .err-box { display: none; background: var(--error-bg); border: 1.5px solid var(--error-bd); border-radius: 4px; padding: 12px 16px; margin-bottom: 12px; }
+    .err-box .err-title { font-size: 13px; font-weight: 700; color: var(--error); margin-bottom: 6px; }
+    .err-box ul { padding-left: 18px; }
+    .err-box li { font-size: 12px; color: var(--error); margin-bottom: 3px; line-height: 1.5; }
+
+    .btn { padding: 10px 22px; border: none; border-radius: 3px; font-family: 'Noto Sans JP', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; letter-spacing: .04em; transition: all .15s; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-h); }
+    .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+    .btn-outline:hover:not(:disabled) { background: #EDF0F6; }
+    .btn:disabled { opacity: .35; cursor: not-allowed; }
+
+    .action-row { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .action-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+
+    /* プログレスオーバーレイ */
+    .progress-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      z-index: 9998; align-items: center; justify-content: center;
+    }
+    .progress-overlay.show { display: flex; }
+    .progress-box {
+      background: white; border-radius: 8px; padding: 28px 36px;
+      text-align: center; min-width: 260px; box-shadow: 0 8px 32px rgba(0,0,0,.2);
+    }
+    .progress-box .spin {
+      width: 40px; height: 40px; border: 4px solid #EEE;
+      border-top-color: var(--primary); border-radius: 50%;
+      animation: spin .8s linear infinite; margin: 0 auto 16px;
+    }
+    .progress-box .prog-msg { font-size: 14px; color: var(--text); font-weight: 500; }
+    .progress-box .prog-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast { position: fixed; bottom: 28px; right: 24px; background: var(--primary); color: #fff; padding: 12px 18px; border-radius: 4px; font-size: 13px; font-weight: 500; transform: translateY(70px); opacity: 0; transition: all .3s ease; z-index: 9999; max-width: 340px; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.err  { background: var(--accent); }
+
+    .req  { color: var(--accent); font-size: 10px; margin-left: 3px; }
+    .hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+    /* ════ PDF TEMPLATE ════ */
+    #pdf-tmpl { display: none; font-family: 'Noto Sans JP', sans-serif; font-size: 9pt; padding: 8mm 8mm; background: #fff; color: #000; width: 194mm; }
+    #pdf-tmpl h2 { text-align: center; font-size: 13pt; font-weight: 700; margin-bottom: 6px; letter-spacing: .08em; }
+    #pdf-tmpl table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-size: 8pt; }
+    #pdf-tmpl td, #pdf-tmpl th { border: 1px solid #333; padding: 3px 5px; vertical-align: middle; }
+    #pdf-tmpl .lbl { background: #E0E0E0; font-weight: 700; white-space: nowrap; }
+    #pdf-tmpl .sec-title { font-size: 9pt; font-weight: 700; background: #333; color: #fff; padding: 2px 6px; margin: 5px 0 2px; }
+    #pdf-tmpl .note-row { font-size: 7.5pt; color: #333; text-align: right; margin-bottom: 1px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>軽貨物 業務日報 入力システム</h1>
+    <div class="sub">入力 → Drive自動保存 → メール送信</div>
+  </div>
+  <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.5);" onclick="clearForm()">クリア</button>
+</header>
+
+<div class="container">
+
+  <!-- ① 基本情報 -->
+  <div class="card">
+    <div class="card-header">① 基本情報</div>
+    <div class="card-body">
+      <div class="g2">
+        <div class="fg"><label>作業日<span class="req">*</span></label><input type="date" id="f-date" required></div>
+        <div class="fg">
+          <label>天候</label>
+          <select id="f-weather">
+            <option value="">選択</option>
+            <option>晴</option><option>曇</option><option>雨</option><option>雪</option>
+            <option>晴のち曇</option><option>晴のち雨</option><option>曇のち雨</option><option>その他</option>
+          </select>
+        </div>
+        <div class="fg"><label>管理者</label><input type="text" id="f-kanri" placeholder="管理者名"></div>
+        <div class="fg"><label>補助員</label><input type="text" id="f-hojo" placeholder="補助員名"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 運転者情報 -->
+  <div class="card">
+    <div class="card-header">② 運転者情報</div>
+    <div class="card-body">
+      <div class="g2">
+        <div class="fg"><label>車両番号<span class="req">*</span></label><input type="text" id="f-number" placeholder="例: 水戸400あ1234" required></div>
+        <div class="fg"><label>運転者名（苗字と名前の間スペースなし）<span class="req">*</span></label><input type="text" id="f-driver" placeholder="例: 山田太郎" required></div>
+        <div class="fg"><label>氏名（稼働報告書用）</label><input type="text" id="f-name" placeholder="氏名"></div>
+        <div class="fg">
+          <label>メールアドレス（PDFリンクの送信先）<span class="req">*</span></label>
+          <input type="email" id="f-email" placeholder="自分のメールアドレス" oninput="saveEmail()">
+          <span class="hint" id="email-hint"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 乗務情報 -->
+  <div class="card">
+    <div class="card-header">③ 乗務情報</div>
+    <div class="card-body">
+      <div class="g2">
+        <div class="fg"><label>乗務開始地</label><input type="text" id="f-start" placeholder="出発地"></div>
+        <div class="fg"><label>開始時刻</label><select id="f-t1" class="time-sel"></select></div>
+        <div class="fg"><label>乗務終了地</label><input type="text" id="f-end" placeholder="終了地"></div>
+        <div class="fg"><label>終了時刻</label><select id="f-t2" class="time-sel"></select></div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <div class="sub-card">
+          <div class="sub-header">休息・睡眠 ①</div>
+          <div class="sub-body">
+            <div class="g3">
+              <div class="fg"><label>地点</label><input type="text" id="f-ba1" placeholder="地点名"></div>
+              <div class="fg"><label>開始時刻</label><select id="f-bt1s" class="time-sel" onchange="calcRestTime(1)"></select></div>
+              <div class="fg"><label>終了時刻</label><select id="f-bt1e" class="time-sel" onchange="calcRestTime(1)"></select></div>
+            </div>
+            <div class="fg" style="margin-top:10px;">
+              <label>休息時間（自動計算）</label>
+              <div class="auto-badge neutral" id="f-bh1">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="sub-card">
+          <div class="sub-header">休息・睡眠 ②</div>
+          <div class="sub-body">
+            <div class="g3">
+              <div class="fg"><label>地点</label><input type="text" id="f-ba2" placeholder="地点名"></div>
+              <div class="fg"><label>開始時刻</label><select id="f-bt2s" class="time-sel" onchange="calcRestTime(2)"></select></div>
+              <div class="fg"><label>終了時刻</label><select id="f-bt2e" class="time-sel" onchange="calcRestTime(2)"></select></div>
+            </div>
+            <div class="fg" style="margin-top:10px;">
+              <label>休息時間（自動計算）</label>
+              <div class="auto-badge neutral" id="f-bh2">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="g3" style="margin-top:14px; align-items:end;">
+        <div class="fg"><label>出庫メーター（km）</label><input type="number" id="f-going" placeholder="例: 12345" oninput="calcDist()"></div>
+        <div class="fg"><label>帰庫メーター（km）</label><input type="number" id="f-return" placeholder="例: 12567" oninput="calcDist()"></div>
+        <div class="fg">
+          <label>乗務距離（自動計算）</label>
+          <div class="auto-badge neutral" id="dist-disp">— <span class="unit">km</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ アルコールチェック -->
+  <div class="card">
+    <div class="card-header">④ アルコールチェック確認項目</div>
+    <div class="card-body">
+      <div class="sub-card">
+        <div class="sub-header">乗務前</div>
+        <div class="sub-body">
+          <div class="g2">
+            <div class="fg"><label>運転前後</label>
+              <select id="f-dba1"><option value="運転前">運転前</option><option value="運転後">運転後</option></select></div>
+            <div class="fg"><label>確認方法</label>
+              <select id="f-cd1"><option value="アルコール検知器">アルコール検知器</option><option value="目視">目視</option></select></div>
+            <div class="fg"><label>酒気の有無（mg/ℓ）</label><input type="text" id="f-al1" placeholder="例: 0.00"></div>
+            <div class="fg"><label>確認者</label><input type="text" id="f-cb1" placeholder="確認者名"></div>
+            <div class="fg gcol-full"><label>指示事項</label><input type="text" id="f-sj1" placeholder="指示事項"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sub-card">
+        <div class="sub-header">乗務後</div>
+        <div class="sub-body">
+          <div class="g2">
+            <div class="fg"><label>運転前後</label>
+              <select id="f-dba2"><option value="運転前">運転前</option><option value="運転後" selected>運転後</option></select></div>
+            <div class="fg"><label>確認方法</label>
+              <select id="f-cd2"><option value="アルコール検知器">アルコール検知器</option><option value="目視">目視</option></select></div>
+            <div class="fg"><label>酒気の有無（mg/ℓ）</label><input type="text" id="f-al2" placeholder="例: 0.00"></div>
+            <div class="fg"><label>確認者</label><input type="text" id="f-cb2" placeholder="確認者名"></div>
+            <div class="fg gcol-full"><label>指示事項</label><input type="text" id="f-sj2" placeholder="指示事項"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ 日常点検 -->
+  <div class="card">
+    <div class="card-header">⑤ 日常点検表（運行前 · 1年保管）</div>
+    <div class="card-body">
+      <div class="sub-card">
+        <div class="sub-header">ブレーキ</div>
+        <div class="sub-body ck-list">
+          <label class="ck-item"><input type="checkbox" id="c1"><span>① ブレーキ・ペダルの踏みしろが適当で、ブレーキの効きが十分であること。</span></label>
+          <label class="ck-item"><input type="checkbox" id="c2"><span>② ブレーキの液量が適当であること。</span></label>
+          <label class="ck-item"><input type="checkbox" id="c3"><span>③ 駐車ブレーキ・レバーの引きしろが適当であること。</span></label>
+        </div>
+      </div>
+      <div class="sub-card">
+        <div class="sub-header">タイヤ</div>
+        <div class="sub-body ck-list">
+          <label class="ck-item"><input type="checkbox" id="c4"><span>① タイヤの空気圧が適当である。</span></label>
+          <label class="ck-item"><input type="checkbox" id="c5"><span>② 亀裂及び損傷はないこと。</span></label>
+          <label class="ck-item"><input type="checkbox" id="c6"><span>③ 異常の摩耗がないこと。</span></label>
+        </div>
+      </div>
+      <div class="sub-card">
+        <div class="sub-header">原動機</div>
+        <div class="sub-body ck-list">
+          <label class="ck-item"><input type="checkbox" id="c7"><span>① 冷却水の量が適当であること。</span></label>
+          <label class="ck-item"><input type="checkbox" id="c8"><span>② エンジンオイルの量が適当であること。</span></label>
+          <label class="ck-item"><input type="checkbox" id="c9"><span>③ 原動機のかかり具合が不良でなく、異常がないこと。</span></label>
+        </div>
+      </div>
+      <div class="sub-card">
+        <div class="sub-header">バッテリー</div>
+        <div class="sub-body ck-list">
+          <label class="ck-item"><input type="checkbox" id="c10"><span>① 液量が適当であること。</span></label>
+        </div>
+      </div>
+      <div class="sub-card">
+        <div class="sub-header">灯火装置及び方向指示器</div>
+        <div class="sub-body ck-list">
+          <label class="ck-item"><input type="checkbox" id="c11"><span>① 点灯又は点滅具合が不良でなく、かつ汚れ及び損傷がないこと。</span></label>
+        </div>
+      </div>
+      <div class="sub-card">
+        <div class="sub-header">前回の運行において異常が認められた箇所</div>
+        <div class="sub-body ck-list">
+          <label class="ck-item"><input type="checkbox" id="c12"><span>① 当該箇所の異常がないこと。</span></label>
+        </div>
+      </div>
+      <div class="fg" style="margin-top:12px;">
+        <label>備考（日常点検における異常な状態・対処等）</label>
+        <textarea id="f-bikou" rows="3" placeholder="異常がある場合はここに記入"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑥ 異常事項 -->
+  <div class="card">
+    <div class="card-header">⑥ 事故・運行遅延・その他の異常</div>
+    <div class="card-body">
+      <div class="fg">
+        <label>事故又は著しく運行遅延・その他の異常が発生した場合には、その概要と原因</label>
+        <textarea id="f-cause" rows="3" placeholder="異常がなければ「なし」と記入"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑦ 稼働報告書 -->
+  <div class="card">
+    <div class="card-header">⑦ 稼働報告書</div>
+    <div class="card-body">
+      <div class="g2">
+        <div class="fg"><label>コード</label><input type="text" id="f-code" placeholder="コード番号"></div>
+        <div class="fg"><label>案件名</label><input type="text" id="f-anken" placeholder="案件名"></div>
+        <div class="fg gcol-full"><label>営業所</label><input type="text" id="f-eigyo" placeholder="例: ヤマト水戸平須、水戸山崎DS等"></div>
+      </div>
+      <table class="dl-table">
+        <thead>
+          <tr><th>区分</th><th>合計（個）</th><th>荷物（個）</th><th>ネコポス（個）</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>総持出</td>
+            <td id="cell-smo"><input type="number" id="f-smo" placeholder="0" min="0" oninput="validateAll()"></td>
+            <td id="cell-lmo"><input type="number" id="f-lmo" placeholder="0" min="0" oninput="validateAll()"></td>
+            <td id="cell-nmo"><input type="number" id="f-nmo" placeholder="0" min="0" oninput="validateAll()"></td>
+          </tr>
+          <tr>
+            <td>総配完</td>
+            <td id="cell-sha"><input type="number" id="f-sha" placeholder="0" min="0" oninput="validateAll()"></td>
+            <td id="cell-lha"><input type="number" id="f-lha" placeholder="0" min="0" oninput="validateAll()"></td>
+            <td id="cell-nha"><input type="number" id="f-nha" placeholder="0" min="0" oninput="validateAll()"></td>
+          </tr>
+          <tr>
+            <td>総持戻</td>
+            <td id="cell-sre"><input type="number" id="f-sre" placeholder="0" min="0" oninput="validateAll()"></td>
+            <td id="cell-lre"><input type="number" id="f-lre" placeholder="0" min="0" oninput="validateAll()"></td>
+            <td id="cell-nre"><input type="number" id="f-nre" placeholder="0" min="0" oninput="validateAll()"></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="hint" style="margin-top:6px;">※ 各列: 総持出 ＝ 総配完 ＋ 総持戻 でなければエラー</p>
+    </div>
+  </div>
+
+  <!-- アクション -->
+  <div class="action-row">
+    <div class="err-box" id="err-box">
+      <div class="err-title">⚠️ 入力エラーがあります — 修正するまでPDF出力できません</div>
+      <ul id="err-list"></ul>
+    </div>
+    <div class="action-btns">
+      <button class="btn btn-outline" id="btn-dl"   onclick="doDownload()">📄 PDFダウンロード</button>
+      <button class="btn btn-primary" id="btn-send" onclick="doSend()">☁️ Drive保存 ＋ メール送信</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- ════ PDFテンプレート ════ -->
+<div id="pdf-tmpl">
+  <h2>業務日報（運転記録）</h2>
+  <table>
+    <colgroup>
+      <col style="width:12%"><col style="width:16%"><col style="width:16%">
+      <col style="width:10%"><col style="width:16%"><col style="width:8%"><col style="width:22%">
+    </colgroup>
+    <tr>
+      <td colspan="3" class="lbl" id="p-hdr"></td>
+      <td class="lbl">管理者</td><td id="p-kanri"></td>
+      <td class="lbl">補助員</td><td id="p-hojo"></td>
+    </tr>
+    <tr>
+      <td class="lbl">車両番号</td><td colspan="2" id="p-number"></td>
+      <td class="lbl">運転者名</td><td colspan="3" id="p-driver"></td>
+    </tr>
+    <tr>
+      <td class="lbl">乗務開始地</td><td colspan="2" id="p-start"></td>
+      <td class="lbl">時刻</td><td colspan="3" id="p-t1"></td>
+    </tr>
+    <tr>
+      <td class="lbl">乗務終了地</td><td colspan="2" id="p-end"></td>
+      <td class="lbl">時刻</td><td colspan="3" id="p-t2"></td>
+    </tr>
+    <tr>
+      <td class="lbl">休憩睡眠地点</td><td id="p-ba1"></td><td id="p-ba2"></td>
+      <td class="lbl">出庫メーター</td><td colspan="3"><span id="p-going"></span>　km</td>
+    </tr>
+    <tr>
+      <td class="lbl">時間帯</td><td id="p-bt1"></td><td id="p-bt2"></td>
+      <td class="lbl">帰庫メーター</td><td colspan="3"><span id="p-return"></span>　km</td>
+    </tr>
+    <tr>
+      <td class="lbl">時間</td><td id="p-bh1"></td><td id="p-bh2"></td>
+      <td class="lbl">乗務距離</td><td colspan="3"><span id="p-dist"></span>　km</td>
+    </tr>
+  </table>
+  <div class="sec-title">◆アルコールチェック確認項目</div>
+  <table>
+    <tr>
+      <th class="lbl" style="width:8%">項目</th><th class="lbl">運転前後</th>
+      <th class="lbl">確認方法</th><th class="lbl">酒気の有無</th>
+      <th class="lbl">確認者</th><th class="lbl">指示事項</th>
+    </tr>
+    <tr><td class="lbl">乗務前</td><td id="p-dba1"></td><td id="p-cd1"></td><td><span id="p-al1"></span>㎎/ℓ</td><td id="p-cb1"></td><td id="p-sj1"></td></tr>
+    <tr><td class="lbl">乗務後</td><td id="p-dba2"></td><td id="p-cd2"></td><td><span id="p-al2"></span>㎎/ℓ</td><td id="p-cb2"></td><td id="p-sj2"></td></tr>
+  </table>
+  <div class="note-row">※運行の開始前に行うこと。　1年保管</div>
+  <div class="sec-title">◆日常点検表</div>
+  <table>
+    <colgroup><col style="width:13%"><col><col style="width:28px"></colgroup>
+    <tr><td class="lbl" rowspan="3">ブレーキ</td>
+      <td>① ブレーキ・ペダルの踏みしろが適当で、ブレーキの効きが十分であること。</td><td style="text-align:center;font-size:11pt;" id="p-c1"></td></tr>
+    <tr><td>② ブレーキの液量が適当であること。</td><td style="text-align:center;font-size:11pt;" id="p-c2"></td></tr>
+    <tr><td>③ 駐車ブレーキ・レバーの引きしろが適当であること。</td><td style="text-align:center;font-size:11pt;" id="p-c3"></td></tr>
+    <tr><td class="lbl" rowspan="3">タイヤ</td>
+      <td>① タイヤの空気圧が適当である。</td><td style="text-align:center;font-size:11pt;" id="p-c4"></td></tr>
+    <tr><td>② 亀裂及び損傷はないこと。</td><td style="text-align:center;font-size:11pt;" id="p-c5"></td></tr>
+    <tr><td>③ 異常の摩耗がないこと。</td><td style="text-align:center;font-size:11pt;" id="p-c6"></td></tr>
+    <tr><td class="lbl" rowspan="3">原動機</td>
+      <td>① 冷却水の量が適当であること。</td><td style="text-align:center;font-size:11pt;" id="p-c7"></td></tr>
+    <tr><td>② エンジンオイルの量が適当であること。</td><td style="text-align:center;font-size:11pt;" id="p-c8"></td></tr>
+    <tr><td>③ 原動機のかかり具合が不良でなく、異常がないこと。</td><td style="text-align:center;font-size:11pt;" id="p-c9"></td></tr>
+    <tr><td class="lbl">バッテリー</td><td>① 液量が適当であること。</td><td style="text-align:center;font-size:11pt;" id="p-c10"></td></tr>
+    <tr><td class="lbl">灯火装置及び<br>方向指示器</td>
+      <td>① 点灯又は点滅具合が不良でなく、かつ汚れ及び損傷がないこと。</td><td style="text-align:center;font-size:11pt;" id="p-c11"></td></tr>
+    <tr><td class="lbl">前回の運行において<br>異常が認められた箇所</td>
+      <td>① 当該箇所の異常がないこと。</td><td style="text-align:center;font-size:11pt;" id="p-c12"></td></tr>
+  </table>
+  <table>
+    <tr>
+      <td class="lbl" style="width:22%;text-align:center;">備考（日常点検における異常な状態、対処等について記入する）</td>
+      <td id="p-bikou" style="min-height:20px;"></td>
+    </tr>
+  </table>
+  <table style="margin-top:4px;">
+    <tr>
+      <td class="lbl" style="width:22%">事故・運行遅延・その他の異常（概要と原因）</td>
+      <td id="p-cause" style="min-height:20px;"></td>
+    </tr>
+  </table>
+  <div class="sec-title" style="margin-top:8px;">稼働報告書</div>
+  <table>
+    <tr><td class="lbl" style="width:10%">氏名</td><td id="p-name"></td><td class="lbl" style="width:10%">コード</td><td id="p-code"></td></tr>
+    <tr><td class="lbl">案件名</td><td id="p-anken"></td><td class="lbl">営業所</td><td id="p-eigyo"></td></tr>
+  </table>
+  <table>
+    <tr>
+      <th class="lbl">区分</th>
+      <th class="lbl" style="text-align:center">合計</th>
+      <th class="lbl" style="text-align:center">荷物</th>
+      <th class="lbl" style="text-align:center">ネコポス</th>
+    </tr>
+    <tr><td class="lbl">総持出</td><td style="text-align:center" id="p-smo"></td><td style="text-align:center" id="p-lmo"></td><td style="text-align:center" id="p-nmo"></td></tr>
+    <tr><td class="lbl">総配完</td><td style="text-align:center" id="p-sha"></td><td style="text-align:center" id="p-lha"></td><td style="text-align:center" id="p-nha"></td></tr>
+    <tr><td class="lbl">総持戻</td><td style="text-align:center" id="p-sre"></td><td style="text-align:center" id="p-lre"></td><td style="text-align:center" id="p-nre"></td></tr>
+  </table>
+</div><!-- /pdf-tmpl -->
+
+<!-- プログレスオーバーレイ -->
+<div class="progress-overlay" id="progress-overlay">
+  <div class="progress-box">
+    <div class="spin"></div>
+    <div class="prog-msg" id="prog-msg">処理中…</div>
+    <div class="prog-sub" id="prog-sub"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════ 定数 ════ */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwmn2-_G5GlwaZR3hDO4bhbEgQJHYPrv5fBrebdrnKonkHHG3jApc-IO3bFb4tWzWmN/exec';
+
+/* ════ メールアドレス 自動保存・自動読込 ════ */
+const EMAIL_KEY = 'nippo_email';
+
+function saveEmail() {
+  const val = document.getElementById('f-email').value.trim();
+  if (val) {
+    localStorage.setItem(EMAIL_KEY, val);
+    document.getElementById('email-hint').textContent = '✓ このデバイスに保存しました';
+  }
+}
+
+function loadEmail() {
+  const saved = localStorage.getItem(EMAIL_KEY);
+  if (saved) {
+    document.getElementById('f-email').value = saved;
+    document.getElementById('email-hint').textContent = '📱 前回入力したアドレスを自動入力しました（変更可）';
+  }
+}
+
+// ページ読込時に自動入力
+window.addEventListener('DOMContentLoaded', loadEmail);
+
+/* ════ 時刻セレクト 15分刻み ════ */
+(function() {
+  let html = '<option value="">--:--</option>';
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const hh = String(h).padStart(2,'0'), mm = String(m).padStart(2,'0');
+      html += `<option value="${hh}:${mm}">${hh}:${mm}</option>`;
+    }
+  }
+  document.querySelectorAll('.time-sel').forEach(el => el.innerHTML = html);
+})();
+
+/* ════ 休息時間 自動計算 ════ */
+function calcRestTime(n) {
+  const s   = document.getElementById(`f-bt${n}s`).value;
+  const e   = document.getElementById(`f-bt${n}e`).value;
+  const box = document.getElementById(`f-bh${n}`);
+  if (!s || !e) { box.textContent = '—'; box.className = 'auto-badge neutral'; return; }
+  const [sh,sm] = s.split(':').map(Number);
+  const [eh,em] = e.split(':').map(Number);
+  let mins = (eh*60+em) - (sh*60+sm);
+  if (mins < 0) mins += 24*60;
+  const h = Math.floor(mins/60), m = mins%60;
+  box.textContent = h > 0 ? (m > 0 ? `${h}時間${m}分` : `${h}時間`) : `${m}分`;
+  box.className = 'auto-badge ok';
+}
+
+/* ════ 乗務距離 計算 ════ */
+function calcDist() {
+  const g  = parseFloat(document.getElementById('f-going').value);
+  const r  = parseFloat(document.getElementById('f-return').value);
+  const el = document.getElementById('dist-disp');
+  if (isNaN(g)||isNaN(r))  { el.innerHTML='— <span class="unit">km</span>'; el.className='auto-badge neutral'; }
+  else if (r < g)           { el.innerHTML=`<strong>${(r-g).toLocaleString()}</strong>&nbsp;km　⚠️ マイナス`; el.className='auto-badge err'; }
+  else                      { el.innerHTML=`<strong>${(r-g).toLocaleString()}</strong>&nbsp;<span class="unit">km</span>`; el.className='auto-badge ok'; }
+  validateAll();
+}
+
+/* ════ バリデーション ════ */
+const DL_COLS = [
+  { label:'合計',    moId:'f-smo', haId:'f-sha', reId:'f-sre', moCell:'cell-smo', haCell:'cell-sha', reCell:'cell-sre' },
+  { label:'荷物',    moId:'f-lmo', haId:'f-lha', reId:'f-lre', moCell:'cell-lmo', haCell:'cell-lha', reCell:'cell-lre' },
+  { label:'ネコポス', moId:'f-nmo', haId:'f-nha', reId:'f-nre', moCell:'cell-nmo', haCell:'cell-nha', reCell:'cell-nre' },
+];
+function checkDelivery() {
+  const errs = [];
+  DL_COLS.forEach(c => {
+    [c.moCell,c.haCell,c.reCell].forEach(id => { document.getElementById(id).style.background=''; });
+    const mo=parseInt(document.getElementById(c.moId).value)||0;
+    const ha=parseInt(document.getElementById(c.haId).value)||0;
+    const re=parseInt(document.getElementById(c.reId).value)||0;
+    if (mo===0&&ha===0&&re===0) return;
+    if (mo !== ha+re) {
+      errs.push(`【${c.label}列】総持出 ${mo}個 ≠ 総配完 ${ha}個 ＋ 総持戻 ${re}個（計 ${ha+re}個）`);
+      [c.moCell,c.haCell,c.reCell].forEach(id => { document.getElementById(id).style.background='#FDDEDD'; });
+    }
+  });
+  return errs;
+}
+function validateAll() {
+  const errors = [];
+  const g = parseFloat(document.getElementById('f-going').value);
+  const r = parseFloat(document.getElementById('f-return').value);
+  if (!isNaN(g)&&!isNaN(r)&&r<g) errors.push(`乗務距離がマイナスです（帰庫 ${r.toLocaleString()} &lt; 出庫 ${g.toLocaleString()}）`);
+  errors.push(...checkDelivery());
+  const box=document.getElementById('err-box');
+  document.getElementById('err-list').innerHTML = errors.map(e=>`<li>${e}</li>`).join('');
+  box.style.display = errors.length>0 ? 'block' : 'none';
+  const dis = errors.length>0;
+  document.getElementById('btn-dl').disabled   = dis;
+  document.getElementById('btn-send').disabled = dis;
+}
+
+/* ════ 令和変換 ════ */
+const REIWA_START=new Date(2019,4,1), HEISEI_START=new Date(1989,0,8);
+const WEEKDAYS=['日','月','火','水','木','金','土'];
+function eraYear(d) {
+  if (d>=REIWA_START)  return `令和${d.getFullYear()-2018}`;
+  if (d>=HEISEI_START) return `平成${d.getFullYear()-1988}`;
+  return `${d.getFullYear()}`;
+}
+
+/* ════ フォームデータ収集 ════ */
+function collect() {
+  const ds=document.getElementById('f-date').value;
+  let yr='',mo='',dy='',wd='',eraLabel='';
+  if (ds) {
+    const d=new Date(ds+'T00:00:00');
+    eraLabel=eraYear(d); yr=d.getFullYear(); mo=d.getMonth()+1; dy=d.getDate(); wd=WEEKDAYS[d.getDay()];
+  }
+  const g=parseFloat(document.getElementById('f-going').value);
+  const r=parseFloat(document.getElementById('f-return').value);
+  const bh1=document.getElementById('f-bh1').textContent.replace('—','').trim();
+  const bh2=document.getElementById('f-bh2').textContent.replace('—','').trim();
+  return {
+    eraLabel,yr,mo,dy,wd,
+    weather:v('f-weather'),kanri:v('f-kanri'),hojo:v('f-hojo'),
+    number:v('f-number'),driver:v('f-driver'),name:v('f-name')||v('f-driver'),email:v('f-email'),
+    start:v('f-start'),t1:v('f-t1'),end:v('f-end'),t2:v('f-t2'),
+    ba1:v('f-ba1'),bt1s:v('f-bt1s'),bt1e:v('f-bt1e'),bh1,
+    ba2:v('f-ba2'),bt2s:v('f-bt2s'),bt2e:v('f-bt2e'),bh2,
+    going:isNaN(g)?'':g, ret:isNaN(r)?'':r, dist:(!isNaN(g)&&!isNaN(r))?(r-g):'',
+    dba1:v('f-dba1'),cd1:v('f-cd1'),al1:v('f-al1'),cb1:v('f-cb1'),sj1:v('f-sj1'),
+    dba2:v('f-dba2'),cd2:v('f-cd2'),al2:v('f-al2'),cb2:v('f-cb2'),sj2:v('f-sj2'),
+    c1:ck('c1'),c2:ck('c2'),c3:ck('c3'),c4:ck('c4'),c5:ck('c5'),c6:ck('c6'),
+    c7:ck('c7'),c8:ck('c8'),c9:ck('c9'),c10:ck('c10'),c11:ck('c11'),c12:ck('c12'),
+    bikou:v('f-bikou'),cause:v('f-cause'),
+    code:v('f-code'),anken:v('f-anken'),eigyo:v('f-eigyo'),
+    smo:v('f-smo'),lmo:v('f-lmo'),nmo:v('f-nmo'),
+    sha:v('f-sha'),lha:v('f-lha'),nha:v('f-nha'),
+    sre:v('f-sre'),lre:v('f-lre'),nre:v('f-nre'),
+  };
+}
+function v(id)  { return (document.getElementById(id)||{}).value||''; }
+function ck(id) { return !!(document.getElementById(id)||{}).checked; }
+
+/* ════ PDFテンプレート充填 ════ */
+function fill(d) {
+  const s=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=(val==null||val==='')?'':String(val); };
+  s('p-hdr',`${d.eraLabel}年 ${d.mo}月 ${d.dy}日（${d.wd}曜日）　天候【${d.weather}】`);
+  s('p-kanri',d.kanri);s('p-hojo',d.hojo);s('p-number',d.number);s('p-driver',d.driver);
+  s('p-start',d.start);s('p-t1',d.t1);s('p-end',d.end);s('p-t2',d.t2);
+  s('p-ba1',d.ba1);s('p-ba2',d.ba2);
+  s('p-bt1',d.bt1s&&d.bt1e?`${d.bt1s}〜${d.bt1e}`:d.bt1s);
+  s('p-bt2',d.bt2s&&d.bt2e?`${d.bt2s}〜${d.bt2e}`:d.bt2s);
+  s('p-bh1',d.bh1);s('p-bh2',d.bh2);
+  s('p-going',  d.going!==''?Number(d.going).toLocaleString():'');
+  s('p-return', d.ret  !==''?Number(d.ret).toLocaleString():'');
+  s('p-dist',   d.dist !==''?Number(d.dist).toLocaleString():'');
+  s('p-dba1',d.dba1);s('p-cd1',d.cd1);s('p-al1',d.al1);s('p-cb1',d.cb1);s('p-sj1',d.sj1);
+  s('p-dba2',d.dba2);s('p-cd2',d.cd2);s('p-al2',d.al2);s('p-cb2',d.cb2);s('p-sj2',d.sj2);
+  for(let i=1;i<=12;i++) s(`p-c${i}`,d[`c${i}`]?'✓':'');
+  s('p-bikou',d.bikou);s('p-cause',d.cause);
+  s('p-name',d.name);s('p-code',d.code);s('p-anken',d.anken);s('p-eigyo',d.eigyo);
+  const fmt=x=>x?x+'個':'';
+  s('p-smo',fmt(d.smo));s('p-lmo',fmt(d.lmo));s('p-nmo',fmt(d.nmo));
+  s('p-sha',fmt(d.sha));s('p-lha',fmt(d.lha));s('p-nha',fmt(d.nha));
+  s('p-sre',fmt(d.sre));s('p-lre',fmt(d.lre));s('p-nre',fmt(d.nre));
+}
+
+/* ════ ファイル名 / PDFオプション ════ */
+function makeFilename(d) {
+  const now=new Date();
+  const ts=[now.getFullYear(),now.getMonth()+1,now.getDate(),now.getHours(),now.getMinutes(),now.getSeconds()]
+    .map((n,i)=>i===0?n:String(n).padStart(2,'0')).join('');
+  return `${d.driver||'氏名未入力'}_軽貨物業務日報_${ts}.pdf`;
+}
+function pdfOpt(fn) {
+  return {
+    margin:[7,6,7,6],filename:fn,
+    image:{type:'jpeg',quality:0.96},
+    html2canvas:{scale:2,useCORS:true,logging:false,letterRendering:true},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+  };
+}
+
+/* ════ PDFダウンロード ════ */
+async function doDownload() {
+  toast('PDF生成中…',false);
+  const tmpl=document.getElementById('pdf-tmpl');
+  try {
+    const d=collect(); fill(d);
+    tmpl.style.display='block';
+    await html2pdf().set(pdfOpt(makeFilename(d))).from(tmpl).save();
+    tmpl.style.display='none';
+    toast('✓ PDFを保存しました',false);
+  } catch(e) {
+    console.error(e); tmpl.style.display='none';
+    toast('PDF生成に失敗しました: '+e.message,true);
+  }
+}
+
+/* ════ Drive保存 ＋ メール送信（GAS Webhook） ════ */
+async function doSend() {
+  const d = collect();
+  if (!d.email) {
+    toast('メールアドレスを入力してください',true);
+    document.getElementById('f-email').focus();
+    return;
+  }
+
+  const tmpl = document.getElementById('pdf-tmpl');
+  showProgress('PDF生成中…','しばらくお待ちください');
+  try {
+    // PDF生成
+    fill(d);
+    tmpl.style.display = 'block';
+    const fn      = makeFilename(d);
+    const pdfBlob = await html2pdf().set(pdfOpt(fn)).from(tmpl).outputPdf('blob');
+    tmpl.style.display = 'none';
+
+    // Base64変換
+    setProgress('アップロード準備中…','');
+    const pdfB64 = await blobToBase64(pdfBlob);
+
+    // GAS Webhookへ送信
+    setProgress('Drive保存・メール送信中…','GASサーバーに送信中');
+    const dateLabel = `${d.eraLabel}年${d.mo}月${d.dy}日（${d.wd}）`;
+    const payload = {
+      pdf:        pdfB64,
+      filename:   fn,
+      workerMail: d.email,
+      subject:    `${d.driver}【業務日報】${dateLabel}`,
+      body:
+        `${d.driver} 様\n\n` +
+        `業務日報を受け付けました。\n\n` +
+        `【作業日】${dateLabel}\n` +
+        `【運転者】${d.driver}\n` +
+        `【車両番号】${d.number}\n\n` +
+        `※このメールは自動送信です。`,
+    };
+
+    const res = await fetch(GAS_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body:    JSON.stringify(payload),
+    });
+    const json = await res.json();
+
+    hideProgress();
+    if (json.status === 'ok') {
+      toast('✅ Drive保存・メール送信が完了しました',false);
+    } else {
+      throw new Error(json.message || '不明なエラー');
+    }
+  } catch(e) {
+    console.error(e);
+    tmpl.style.display = 'none';
+    hideProgress();
+    toast('エラー: '+e.message,true);
+  }
+}
+
+/* ════ Blob → Base64 ════ */
+function blobToBase64(blob) {
+  return new Promise((res,rej) => {
+    const fr=new FileReader();
+    fr.onloadend=()=>res(fr.result.split(',')[1]);
+    fr.onerror=rej;
+    fr.readAsDataURL(blob);
+  });
+}
+
+/* ════ プログレス ════ */
+function showProgress(msg,sub='') {
+  document.getElementById('prog-msg').textContent=msg;
+  document.getElementById('prog-sub').textContent=sub;
+  document.getElementById('progress-overlay').classList.add('show');
+}
+function setProgress(msg,sub='') {
+  document.getElementById('prog-msg').textContent=msg;
+  document.getElementById('prog-sub').textContent=sub;
+}
+function hideProgress() { document.getElementById('progress-overlay').classList.remove('show'); }
+
+/* ════ フォームクリア ════ */
+function clearForm() {
+  if (!confirm('入力内容をすべてクリアしますか？')) return;
+  document.querySelectorAll('input[type="text"],input[type="date"],input[type="number"],input[type="email"],textarea')
+    .forEach(el=>el.value='');
+  document.querySelectorAll('input[type="checkbox"]').forEach(el=>el.checked=false);
+  document.querySelectorAll('.time-sel').forEach(el=>el.value='');
+  ['f-bh1','f-bh2'].forEach(id=>{ const el=document.getElementById(id); el.textContent='—'; el.className='auto-badge neutral'; });
+  const dd=document.getElementById('dist-disp');
+  dd.innerHTML='— <span class="unit">km</span>'; dd.className='auto-badge neutral';
+  DL_COLS.forEach(c=>[c.moCell,c.haCell,c.reCell].forEach(id=>{ document.getElementById(id).style.background=''; }));
+  document.getElementById('err-box').style.display='none';
+  document.getElementById('btn-dl').disabled=document.getElementById('btn-send').disabled=false;
+  toast('クリアしました',false);
+}
+
+/* ════ トースト ════ */
+function toast(msg,isErr=false) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast'+(isErr?' err':'');
+  void el.offsetWidth; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),isErr?6000:3500);
+}
+</script>
+</body>
+</html>
