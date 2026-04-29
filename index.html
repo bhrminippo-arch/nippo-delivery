@@ -652,6 +652,7 @@ async function doSend() {
     hideProgress();
     if (json.status === 'ok') {
       toast('✅ Drive保存・メール送信が完了しました', false);
+      setTimeout(() => clearForm(true), 2000);
     } else {
       throw new Error(json.message || '不明なエラー');
     }
@@ -671,8 +672,8 @@ function showProgress(msg, sub='') {
 function hideProgress() { document.getElementById('progress-overlay').classList.remove('show'); }
 
 /* ════ フォームクリア ════ */
-function clearForm() {
-  if (!confirm('入力内容をすべてクリアしますか？')) return;
+function clearForm(skipConfirm = false) {
+  if (!skipConfirm && !confirm('入力内容をすべてクリアしますか？')) return;
   document.querySelectorAll('input[type="text"],input[type="date"],input[type="number"],input[type="email"],textarea')
     .forEach(el => el.value = '');
   document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
