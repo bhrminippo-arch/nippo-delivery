@@ -563,8 +563,8 @@ function validateAll() {
 
   // ── 稼働報告書 合計・荷物列 必須 ──
   const REQ_DL = [
-    { id:'f-smo', label:'総持出（合計）' }, { id:'f-sha', label:'総配完（合計）' },
-    { id:'f-lmo', label:'総持出（荷物）' }, { id:'f-lha', label:'総配完（荷物）' },
+    { id:'f-smo', label:'総持出（合計）' }, { id:'f-sha', label:'総配完（合計）' }, { id:'f-sre', label:'総持戻（合計）' },
+    { id:'f-lmo', label:'総持出（荷物）' }, { id:'f-lha', label:'総配完（荷物）' }, { id:'f-lre', label:'総持戻（荷物）' },
   ];
   REQ_DL.forEach(({ id, label }) => {
     if (document.getElementById(id).value === '') errors.push(`「${label}」は必須です`);
