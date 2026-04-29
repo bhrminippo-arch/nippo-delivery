@@ -48,10 +48,12 @@
     label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .03em; }
     input[type="text"], input[type="date"], input[type="number"], input[type="email"],
     select, textarea {
-      width: 100%; border: 1px solid #CCC; border-radius: 3px; padding: 8px 10px;
+      width: 100%; max-width: 100%; box-sizing: border-box;
+      border: 1px solid #CCC; border-radius: 3px; padding: 8px 10px;
       font-family: 'Noto Sans JP', sans-serif; font-size: 13px; color: var(--text);
       background: #fff; transition: border-color .15s, box-shadow .15s;
     }
+    input[type="date"] { -webkit-appearance: none; appearance: none; }
     input:focus, select:focus, textarea:focus {
       outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,58,92,.12);
     }
@@ -243,7 +245,7 @@
             <div class="fg"><label>運転前後</label>
               <select id="f-dba1"><option value="運転前">運転前</option><option value="運転後">運転後</option></select></div>
             <div class="fg"><label>確認方法</label>
-              <select id="f-cd1"><option value="電話">電話</option><option value="対面">対面</option></select></div>
+              <select id="f-cd1"><option value="対面">対面</option><option value="電話">電話</option></select></div>
             <div class="fg"><label>酒気の有無（mg/ℓ）<span class="req">*</span></label><input type="text" id="f-al1" placeholder="例: 0.00" inputmode="decimal" oninput="this.value=this.value.replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1')" onblur="if(this.value.startsWith('.'))this.value='0'+this.value"></div>
             <div class="fg"><label>確認者<span class="req">*</span></label><input type="text" id="f-cb1" placeholder="確認者名"></div>
             <div class="fg gcol-full"><label>指示事項<span class="opt">（任意）</span></label><input type="text" id="f-sj1" placeholder="指示事項"></div>
@@ -257,7 +259,7 @@
             <div class="fg"><label>運転前後</label>
               <select id="f-dba2"><option value="運転前">運転前</option><option value="運転後" selected>運転後</option></select></div>
             <div class="fg"><label>確認方法</label>
-              <select id="f-cd2"><option value="電話">電話</option><option value="対面">対面</option></select></div>
+              <select id="f-cd2"><option value="対面">対面</option><option value="電話">電話</option></select></div>
             <div class="fg"><label>酒気の有無（mg/ℓ）<span class="req">*</span></label><input type="text" id="f-al2" placeholder="例: 0.00" inputmode="decimal" oninput="this.value=this.value.replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1')" onblur="if(this.value.startsWith('.'))this.value='0'+this.value"></div>
             <div class="fg"><label>確認者<span class="req">*</span></label><input type="text" id="f-cb2" placeholder="確認者名"></div>
             <div class="fg gcol-full"><label>指示事項<span class="opt">（任意）</span></label><input type="text" id="f-sj2" placeholder="指示事項"></div>
