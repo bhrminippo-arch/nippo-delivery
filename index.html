@@ -410,6 +410,7 @@
 <script>
 /* ════ 定数 ════ */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwmn2-_G5GlwaZR3hDO4bhbEgQJHYPrv5fBrebdrnKonkHHG3jApc-IO3bFb4tWzWmN/exec';
+let isSending = false; // 送信中フラグ
 
 /* ════ 時刻セレクト 15分刻み ════ */
 (function() {
@@ -579,7 +580,7 @@ function validateAll() {
   const box = document.getElementById('err-box');
   document.getElementById('err-list').innerHTML = errors.map(e=>`<li>${e}</li>`).join('');
   box.style.display = errors.length > 0 ? 'block' : 'none';
-  document.getElementById('btn-send').disabled = errors.length > 0;
+  if (!isSending) document.getElementById('btn-send').disabled = errors.length > 0;
 }
 
 /* ════ 令和変換 ════ */
@@ -642,6 +643,7 @@ async function doSend() {
 
   // 送信中はボタンを無効化（2重送信防止）
   const btnSend = document.getElementById('btn-send');
+  isSending = true;
   btnSend.disabled = true;
 
   showProgress('GASでPDF生成中…', 'Google Docsテンプレートから変換しています');
@@ -655,6 +657,7 @@ async function doSend() {
     hideProgress();
     if (json.status === 'ok') {
       toast('✅ Drive保存・メール送信が完了しました', false);
+      isSending = false;
       setTimeout(() => clearForm(true), 2000);
     } else {
       throw new Error(json.message || '不明なエラー');
@@ -662,6 +665,7 @@ async function doSend() {
   } catch(e) {
     console.error(e);
     hideProgress();
+    isSending = false;
     btnSend.disabled = false; // 失敗時は再送信できるよう戻す
     toast('エラー: ' + e.message, true);
   }
