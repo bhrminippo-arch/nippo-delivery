@@ -425,6 +425,58 @@ let isSending = false; // 送信中フラグ
 })();
 
 /* ════ 自動保存（車両番号・運転者名・氏名・メール） ════ */
+const DRAFT_KEY  = 'nippo_draft'; // 一時保存キー
+const DRAFT_FIELDS = [
+  'f-date','f-weather','f-kanri','f-hojo','f-number','f-driver','f-email',
+  'f-start','f-t1','f-end','f-t2',
+  'f-ba1','f-bt1s','f-bt1e','f-ba2','f-bt2s','f-bt2e',
+  'f-going','f-return',
+  'f-dba1','f-cd1','f-al1','f-cb1','f-sj1',
+  'f-dba2','f-cd2','f-al2','f-cb2','f-sj2',
+  'f-bikou','f-cause',
+  'f-code','f-anken-sel','f-anken','f-eigyo',
+  'f-smo','f-sha','f-sre','f-lmo','f-lha','f-lre','f-nmo','f-nha','f-nre'
+];
+
+function saveDraft() {
+  const data = {};
+  DRAFT_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+  for (let i = 1; i <= 12; i++) {
+    const el = document.getElementById('c' + i);
+    if (el) data['c' + i] = el.checked;
+  }
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+}
+
+function restoreDraft() {
+  const raw = localStorage.getItem(DRAFT_KEY);
+  if (!raw) return;
+  const data = JSON.parse(raw);
+  DRAFT_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && data[id] !== undefined) el.value = data[id];
+  });
+  for (let i = 1; i <= 12; i++) {
+    const el = document.getElementById('c' + i);
+    if (el && data['c' + i] !== undefined) el.checked = data['c' + i];
+  }
+  // その他選択時のテキスト欄表示
+  if (data['f-anken-sel'] === 'その他') {
+    document.getElementById('f-anken').style.display = 'block';
+  }
+  // 再計算
+  if (typeof calcDist === 'function') calcDist();
+  if (typeof calcRestTime === 'function') { calcRestTime(1); calcRestTime(2); }
+  if (typeof validateAll === 'function') validateAll();
+}
+
+function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
+}
+
 const EMAIL_KEY  = 'nippo_email';
 const AUTO_KEYS  = { number: 'nippo_number', driver: 'nippo_driver' };
 
@@ -441,17 +493,23 @@ function saveEmail() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // メール
-  const savedMail = localStorage.getItem(EMAIL_KEY);
-  if (savedMail) {
-    document.getElementById('f-email').value = savedMail;
-    document.getElementById('email-hint').textContent = '📱 前回入力したアドレスを自動入力しました（変更可）';
+  // 一時保存データを復元
+  restoreDraft();
+  // メール（一時保存がない場合のフォールバック）
+  if (!localStorage.getItem(DRAFT_KEY)) {
+    const savedMail = localStorage.getItem(EMAIL_KEY);
+    if (savedMail) {
+      document.getElementById('f-email').value = savedMail;
+      document.getElementById('email-hint').textContent = '📱 前回入力したアドレスを自動入力しました（変更可）';
+    }
+    Object.entries(AUTO_KEYS).forEach(([field, key]) => {
+      const saved = localStorage.getItem(key);
+      if (saved) document.getElementById(`f-${field}`).value = saved;
+    });
   }
-  // 車両番号・運転者名・氏名
-  Object.entries(AUTO_KEYS).forEach(([field, key]) => {
-    const saved = localStorage.getItem(key);
-    if (saved) document.getElementById(`f-${field}`).value = saved;
-  });
+  // 入力のたびに自動保存
+  document.addEventListener('input', saveDraft);
+  document.addEventListener('change', saveDraft);
 });
 
 /* ════ 案件名 その他切替 ════ */
@@ -658,6 +716,7 @@ async function doSend() {
     if (json.status === 'ok') {
       toast('✅ Drive保存・メール送信が完了しました', false);
       isSending = false;
+      clearDraft(); // 送信成功後に一時保存を削除
       setTimeout(() => clearForm(true), 2000);
     } else {
       throw new Error(json.message || '不明なエラー');
@@ -701,6 +760,7 @@ function clearForm(skipConfirm = false) {
   }));
   document.getElementById('err-box').style.display  = 'none';
   document.getElementById('btn-send').disabled = false;
+  clearDraft(); // 手動クリア時も一時保存を削除
 
   // 自動保存済みの値を復元
   const savedMail = localStorage.getItem(EMAIL_KEY);
