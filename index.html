@@ -101,6 +101,8 @@
 
     .action-row { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
     .action-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+    /* 送信前の注意文（二重送信防止） */
+    .send-note { width: fit-content; max-width: 100%; margin-left: auto; background: #FFF8E1; border: 1px solid #E8C96A; border-radius: 4px; padding: 8px 12px; font-size: 12px; font-weight: 500; color: #5C4400; line-height: 1.6; }
 
     /* プログレスオーバーレイ */
     .progress-overlay {
@@ -401,6 +403,7 @@
       <div class="err-title">⚠️ 入力エラーがあります — 修正するまで送信できません</div>
       <ul id="err-list"></ul>
     </div>
+    <div class="send-note">※エラーが発生した場合でもご自身にメールが届けば再送信は不要です</div>
     <div class="action-btns">
       <button class="btn btn-primary" id="btn-send" onclick="doSend()">☁️ Drive保存 ＋ メール送信</button>
     </div>
