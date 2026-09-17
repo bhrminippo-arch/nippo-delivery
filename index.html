@@ -348,6 +348,8 @@
             <option value="">選択してください</option>
             <option value="Amazon">Amazon</option>
             <option value="ヤマト運輸">ヤマト運輸</option>
+            <option value="佐川急便">佐川急便</option>
+            <option value="PW配送">PW配送</option>
             <option value="その他">その他</option>
           </select>
           <input type="text" id="f-anken" placeholder="案件名を入力" style="display:none; margin-top:8px;" oninput="validateAll()">
@@ -380,6 +382,16 @@
         </tbody>
       </table>
       <p class="hint" style="margin-top:6px;">※ 各列: 総持出 ＝ 総配完 ＋ 総持戻 でなければエラー</p>
+    </div>
+  </div>
+
+  <!-- ⑧ 管理者へ共有事項 -->
+  <div class="card">
+    <div class="card-header">⑧ 管理者へ共有事項<span class="opt" style="font-weight:400;margin-left:8px;">（任意）</span></div>
+    <div class="card-body">
+      <div class="fg">
+        <textarea id="f-share" rows="3" placeholder="誤配・クレーム・破損などの報告&#10;運行中に発生した共有事項"></textarea>
+      </div>
     </div>
   </div>
 
@@ -433,7 +445,7 @@ const DRAFT_FIELDS = [
   'f-going','f-return',
   'f-dba1','f-cd1','f-al1','f-cb1','f-sj1',
   'f-dba2','f-cd2','f-al2','f-cb2','f-sj2',
-  'f-bikou','f-cause',
+  'f-bikou','f-cause','f-share',
   'f-code','f-anken-sel','f-anken','f-eigyo',
   'f-smo','f-sha','f-sre','f-lmo','f-lha','f-lre','f-nmo','f-nha','f-nre'
 ];
@@ -679,7 +691,7 @@ function collect() {
     dba2: v('f-dba2'), cd2: v('f-cd2'), al2: v('f-al2'), cb2: v('f-cb2'), sj2: v('f-sj2'),
     c1:ck('c1'),c2:ck('c2'),c3:ck('c3'),c4:ck('c4'),c5:ck('c5'),c6:ck('c6'),
     c7:ck('c7'),c8:ck('c8'),c9:ck('c9'),c10:ck('c10'),c11:ck('c11'),c12:ck('c12'),
-    bikou: v('f-bikou'), cause: v('f-cause'),
+    bikou: v('f-bikou'), cause: v('f-cause'), share: v('f-share'),
     code: v('f-code'), anken: getAnken(), eigyo: v('f-eigyo'),
     smo: v('f-smo'), lmo: v('f-lmo'), nmo: v('f-nmo'),
     sha: v('f-sha'), lha: v('f-lha'), nha: v('f-nha'),
