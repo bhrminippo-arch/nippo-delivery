@@ -327,20 +327,9 @@
     </div>
   </div>
 
-  <!-- ⑥ 異常事項 -->
+  <!-- ⑥ 稼働報告書 -->
   <div class="card">
-    <div class="card-header">⑥ 事故・運行遅延・その他の異常<span class="opt" style="font-weight:400;margin-left:8px;">（任意）</span></div>
-    <div class="card-body">
-      <div class="fg">
-        <label>事故又は著しく運行遅延・その他の異常が発生した場合には、その概要と原因</label>
-        <textarea id="f-cause" rows="3" placeholder="異常がなければ空欄でOK"></textarea>
-      </div>
-    </div>
-  </div>
-
-  <!-- ⑦ 稼働報告書 -->
-  <div class="card">
-    <div class="card-header">⑦ 稼働報告書</div>
+    <div class="card-header">⑥ 稼働報告書</div>
     <div class="card-body">
       <div class="g2">
         <div class="fg"><label>コード<span class="opt">（任意）</span></label><input type="text" id="f-code" placeholder="コード番号"></div>
@@ -387,12 +376,12 @@
     </div>
   </div>
 
-  <!-- ⑧ 管理者へ共有事項 -->
+  <!-- ⑦ 管理者へ共有事項 -->
   <div class="card">
-    <div class="card-header">⑧ 管理者へ共有事項<span class="opt" style="font-weight:400;margin-left:8px;">（何もなければ空欄でOK）</span></div>
+    <div class="card-header">⑦ 管理者へ共有事項<span class="opt" style="font-weight:400;margin-left:8px;">（何もなければ空欄でOK）</span></div>
     <div class="card-body">
       <div class="fg">
-        <textarea id="f-share" rows="3" placeholder="誤配・クレーム・破損などの報告&#10;運行中に発生した共有事項"></textarea>
+        <textarea id="f-share" rows="3" placeholder="誤配・クレーム・破損などの報告&#10;運行中に発生した共有事項&#10;事故・運行遅延が発生した場合"></textarea>
       </div>
     </div>
   </div>
@@ -448,7 +437,7 @@ const DRAFT_FIELDS = [
   'f-going','f-return',
   'f-dba1','f-cd1','f-al1','f-cb1','f-sj1',
   'f-dba2','f-cd2','f-al2','f-cb2','f-sj2',
-  'f-bikou','f-cause','f-share',
+  'f-bikou','f-share',
   'f-code','f-anken-sel','f-anken','f-eigyo',
   'f-smo','f-sha','f-sre','f-lmo','f-lha','f-lre','f-nmo','f-nha','f-nre'
 ];
@@ -482,7 +471,7 @@ function restoreDraft() {
   if (data['f-anken-sel'] === 'その他') {
     document.getElementById('f-anken').style.display = 'block';
   }
-  // ⑦3列目の見出しを反映
+  // ⑥3列目の見出しを反映
   if (typeof updateCol3 === 'function') updateCol3();
   // 再計算
   if (typeof calcDist === 'function') calcDist();
@@ -512,7 +501,7 @@ function saveEmail() {
 window.addEventListener('DOMContentLoaded', () => {
   // 一時保存データを復元
   restoreDraft();
-  // ⑦3列目の見出しを初期表示に反映（下書きなしの場合も）
+  // ⑥3列目の見出しを初期表示に反映（下書きなしの場合も）
   updateCol3();
   // メール（一時保存がない場合のフォールバック）
   if (!localStorage.getItem(DRAFT_KEY)) {
@@ -545,7 +534,7 @@ function toggleAnken() {
   updateCol3();
 }
 
-/* ════ ⑦3列目の見出し切替（案件名に連動） ════ */
+/* ════ ⑥3列目の見出し切替（案件名に連動） ════ */
 const COL3_LABELS = { 'ヤマト運輸': 'ネコポス', 'PW配送': 'カートリッジ' };
 function getCol3Label() {
   return COL3_LABELS[document.getElementById('f-anken-sel').value] || 'その他';
@@ -709,7 +698,7 @@ function collect() {
     dba2: v('f-dba2'), cd2: v('f-cd2'), al2: v('f-al2'), cb2: v('f-cb2'), sj2: v('f-sj2'),
     c1:ck('c1'),c2:ck('c2'),c3:ck('c3'),c4:ck('c4'),c5:ck('c5'),c6:ck('c6'),
     c7:ck('c7'),c8:ck('c8'),c9:ck('c9'),c10:ck('c10'),c11:ck('c11'),c12:ck('c12'),
-    bikou: v('f-bikou'), cause: v('f-cause'), share: v('f-share'),
+    bikou: v('f-bikou'), share: v('f-share'),
     code: v('f-code'), anken: getAnken(), eigyo: v('f-eigyo'), col3: getCol3Label(),
     smo: v('f-smo'), lmo: v('f-lmo'), nmo: v('f-nmo'),
     sha: v('f-sha'), lha: v('f-lha'), nha: v('f-nha'),
