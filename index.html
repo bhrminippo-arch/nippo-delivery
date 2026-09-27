@@ -360,7 +360,7 @@
       </div>
       <table class="dl-table">
         <thead>
-          <tr><th>区分</th><th>合計（個）<span class="req">*</span></th><th>荷物（個）<span class="req">*</span></th><th>ネコポス（個）<span class="opt">任意</span></th></tr>
+          <tr><th>区分</th><th>合計（個）<span class="req">*</span></th><th>荷物（個）<span class="req">*</span></th><th id="th-col3">ネコポス（個）<span class="opt">任意</span></th></tr>
         </thead>
         <tbody>
           <tr>
@@ -482,6 +482,8 @@ function restoreDraft() {
   if (data['f-anken-sel'] === 'その他') {
     document.getElementById('f-anken').style.display = 'block';
   }
+  // ⑦3列目の見出しを反映
+  if (typeof updateCol3 === 'function') updateCol3();
   // 再計算
   if (typeof calcDist === 'function') calcDist();
   if (typeof calcRestTime === 'function') { calcRestTime(1); calcRestTime(2); }
@@ -510,6 +512,8 @@ function saveEmail() {
 window.addEventListener('DOMContentLoaded', () => {
   // 一時保存データを復元
   restoreDraft();
+  // ⑦3列目の見出しを初期表示に反映（下書きなしの場合も）
+  updateCol3();
   // メール（一時保存がない場合のフォールバック）
   if (!localStorage.getItem(DRAFT_KEY)) {
     const savedMail = localStorage.getItem(EMAIL_KEY);
@@ -538,6 +542,17 @@ function toggleAnken() {
     txt.style.display = 'none';
     txt.value = '';
   }
+  updateCol3();
+}
+
+/* ════ ⑦3列目の見出し切替（案件名に連動） ════ */
+const COL3_LABELS = { 'ヤマト運輸': 'ネコポス', 'PW配送': 'カートリッジ' };
+function getCol3Label() {
+  return COL3_LABELS[document.getElementById('f-anken-sel').value] || 'その他';
+}
+function updateCol3() {
+  document.getElementById('th-col3').innerHTML =
+    getCol3Label() + '（個）<span class="opt">任意</span>';
 }
 
 /* ════ 案件名取得（select or 自由入力） ════ */
@@ -695,7 +710,7 @@ function collect() {
     c1:ck('c1'),c2:ck('c2'),c3:ck('c3'),c4:ck('c4'),c5:ck('c5'),c6:ck('c6'),
     c7:ck('c7'),c8:ck('c8'),c9:ck('c9'),c10:ck('c10'),c11:ck('c11'),c12:ck('c12'),
     bikou: v('f-bikou'), cause: v('f-cause'), share: v('f-share'),
-    code: v('f-code'), anken: getAnken(), eigyo: v('f-eigyo'),
+    code: v('f-code'), anken: getAnken(), eigyo: v('f-eigyo'), col3: getCol3Label(),
     smo: v('f-smo'), lmo: v('f-lmo'), nmo: v('f-nmo'),
     sha: v('f-sha'), lha: v('f-lha'), nha: v('f-nha'),
     sre: v('f-sre'), lre: v('f-lre'), nre: v('f-nre'),
@@ -764,6 +779,7 @@ function clearForm(skipConfirm = false) {
   document.getElementById('f-anken-sel').value = '';
   document.getElementById('f-anken').value = '';
   document.getElementById('f-anken').style.display = 'none';
+  updateCol3();
   ['f-bh1','f-bh2'].forEach(id => {
     const el = document.getElementById(id);
     el.textContent = '—'; el.className = 'auto-badge neutral';
